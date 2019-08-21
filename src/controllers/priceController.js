@@ -2,93 +2,111 @@ const axios = require('axios');
 var solver = require('node-tspsolver')
 
 
-module.exports = {
-    async index(req, res) {
-        try {
-            const country = "BR";
-            const currency = "BRL";
-            const locale = "pt-BR";
-            const outboundpartialdate = "2019-09-01";
-            const { cities } = req.body
-
-            const cities_combination = []
-
-
-
-
-            for (let i = 0; i < cities.length - 1; i++) {
-                // This is where you'll capture that last value
-                for (let j = i + 1; j < cities.length; j++) {
-                    cities_combination.push([cities[i], cities[j]]);
-
-                }
+function getPermutations(list, maxLen) {
+    // Copy initial values as arrays
+    var perm = list.map(function (val) {
+        return [val];
+    });
+    // Our permutation generator
+    function generate(perm, maxLen, currLen) {
+        // Reached desired length
+        if (currLen === maxLen) {
+            return perm;
+        }
+        // For each existing permutation
+        for (var i = 0, len = perm.length; i < len; i++) {
+            var currPerm = perm.shift();
+            // Create new permutation
+            for (var k = 0; k < list.length; k++) {
+                perm.push(currPerm.concat(list[k]));
             }
-            for (let i = 0; i < cities.length - 1; i++) {
-                // This is where you'll capture that last value
-                for (let j = i + 1; j < cities.length; j++) {
-                    cities_combination.push([cities[j], cities[i]]);
-                }
-            }
+        }
+        // Recurse
+        return generate(perm, maxLen, currLen + 1);
+    };
+    // Start with size 1 because of initial values
+    return generate(perm, maxLen, 1);
+};
 
+function listToMatrix(list, elementsPerSubArray) {
+    var matrix = [],
+        i, k;
 
-
-
-            // let prices = [];
-
-            // const config = {
-            //     headers: {
-            //         'x-rapidapi-host': 'skyscanner-skyscanner-flight-search-v1.p.rapidapi.com',
-            //         'x-rapidapi-key': '27dd665eafmsh05e7e181465dbd8p100153jsnb5d709e7fcc2'
-            //     }
-            // };
-
-            // for (var i = 0; i < cities_combination.length; i++) {
-            //     const response = await axios.get(` https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/${country}/${currency}/${locale}/${cities_combination[i][0]}/${cities_combination[i][1]}/${outboundpartialdate}`, config)
-
-
-
-            //     console.log(`${cities_combination[i][0]} -> ${cities_combination[i][1]} : ${response.data.Quotes[0].MinPrice}`)
-            //     prices.push(response.data.Quotes[0].MinPrice)
-            // };
-
-            // prices = [496, 381, 421, 649, 353, 348]
-            // prices = [ 496, 421, 353, 381, 649, 348 ]
-
-            console.log(prices)
-
-            let matrix = []
-            const line_matrix = []
-            for (i in prices) {
-                for (z in prices) {
-                    if (prices[i] == prices[z]) {
-                        line_matrix.push(0);
-                    } else {
-                        line_matrix.push(prices[z]);
-                        // console.log(line_matrix)
-                    }
-
-                }
-                matrix.push(line_matrix);
-            }
-            // console.log(matrix)
-
-            solver
-                .solveTsp(matrix, true, {})
-                .then((result) => {
-                    // result.map((city) => {
-                    //     route.push(cities[city]);
-                    // })
-                    return res.json(result) // result is an array of indices specifying the route.
-                });
-
-
-            return res.json({ "ok:": true });
-        } catch (error) {
-            return res.json({ "error:": "erro" });
+    for (i = 0, k = -1; i < list.length; i++) {
+        if (i % elementsPerSubArray === 0) {
+            k++;
+            matrix[k] = [];
         }
 
+        matrix[k].push(list[i]);
+    }
 
+    return matrix;
+}
 
+async function getPrices(config, country, currency, locale, outboundpartialdate, cities) {
+    let prices = [];
 
-    },
+    for (var i = 0; i < cities.length; i++) {
+
+        try {
+            console.log(`Tentando ${cities[i][0]} -> ${cities[i][1]}`)
+            const response = await axios.get(` https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/${country}/${currency}/${locale}/${cities[i][0]}/${cities[i][1]}/${outboundpartialdate}`, config)
+
+            if (response.data.Quotes[0] == undefined) {
+                console.log(`${cities[i][0]} -> ${cities[i][1]} : 0`)
+                prices.push(0);
+            } else {
+                console.log(`${cities[i][0]} -> ${cities[i][1]} : ${response.data.Quotes[0].MinPrice}`)
+                prices.push(response.data.Quotes[0].MinPrice)
+
+            }
+
+        } catch (error) {
+            prices.push(Infinity);
+        }
+    }
+    return prices
+}
+
+module.exports = {
+    async index(req, res) {
+
+        const config = {
+            headers: {
+                'x-rapidapi-host': 'skyscanner-skyscanner-flight-search-v1.p.rapidapi.com',
+                'x-rapidapi-key': '27dd665eafmsh05e7e181465dbd8p100153jsnb5d709e7fcc2'
+            }
+        };
+
+        const country = "BR";
+        const currency = "BRL";
+        const locale = "pt-BR";
+        const outboundpartialdate = "2019-10-02";
+        const {
+            cities
+        } = req.body
+
+        try {
+            // combine all possibilities of routes  2 on 2
+            const citiesCombination = await getPermutations(cities, 2);
+            // get all prices for all routes
+            const prices = await getPrices(config, country, currency, locale, outboundpartialdate, citiesCombination)
+            // generare the coast matrix for the Travelling salesman solver
+            const costMatrix = await listToMatrix(prices, cities.length)
+            console.log(costMatrix)
+
+            //solves the Travelling salesman problem
+            solver
+                .solveTsp(costMatrix, true, {})
+                .then(function (result) {
+                    return res.json(result);
+                })
+
+        } catch (error) {
+            return res.json({
+                "ok:": false
+            });
+        }
+    }
 }

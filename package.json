@@ -26,6 +26,7 @@
     "axios": "^0.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "generatorics": "^1.1.0",
     "mongoose": "^5.6.8",
     "node-tspsolver": "^1.0.1",
     "request": "^2.88.0",
