@@ -1,48 +1,6 @@
 const axios = require('axios');
-var solver = require('node-tspsolver')
-
-
-function getPermutations(list, maxLen) {
-    // Copy initial values as arrays
-    var perm = list.map(function (val) {
-        return [val];
-    });
-    // Our permutation generator
-    function generate(perm, maxLen, currLen) {
-        // Reached desired length
-        if (currLen === maxLen) {
-            return perm;
-        }
-        // For each existing permutation
-        for (var i = 0, len = perm.length; i < len; i++) {
-            var currPerm = perm.shift();
-            // Create new permutation
-            for (var k = 0; k < list.length; k++) {
-                perm.push(currPerm.concat(list[k]));
-            }
-        }
-        // Recurse
-        return generate(perm, maxLen, currLen + 1);
-    };
-    // Start with size 1 because of initial values
-    return generate(perm, maxLen, 1);
-};
-
-function listToMatrix(list, elementsPerSubArray) {
-    var matrix = [],
-        i, k;
-
-    for (i = 0, k = -1; i < list.length; i++) {
-        if (i % elementsPerSubArray === 0) {
-            k++;
-            matrix[k] = [];
-        }
-
-        matrix[k].push(list[i]);
-    }
-
-    return matrix;
-}
+const solver = require('node-tspsolver')
+const utils = require("./utils/utils.js")
 
 async function getPrices(config, country, currency, locale, outboundpartialdate, cities) {
     let prices = [];
@@ -89,12 +47,13 @@ module.exports = {
 
         try {
             // combine all possibilities of routes  2 on 2
-            const citiesCombination = await getPermutations(cities, 2);
+            const citiesCombination = await utils.getPermutations(cities, 2);
+
             // get all prices for all routes
             const prices = await getPrices(config, country, currency, locale, outboundpartialdate, citiesCombination)
+
             // generare the coast matrix for the Travelling salesman solver
-            const costMatrix = await listToMatrix(prices, cities.length)
-            console.log(costMatrix)
+            const costMatrix = await utils.listToMatrix(prices, cities.length)
 
             //solves the Travelling salesman problem
             solver
