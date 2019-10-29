@@ -1,6 +1,6 @@
 const axios = require('axios');
 const solver = require('node-tspsolver')
-const utils = require("./utils/utils.js")
+const utils = require("../utils/utils.js")
 
 async function getPrices(config, country, currency, locale, outboundpartialdate, cities) {
     let prices = [];
@@ -40,20 +40,24 @@ module.exports = {
         const country = "BR";
         const currency = "BRL";
         const locale = "pt-BR";
-        const outboundpartialdate = "2019-10-02";
+        const outboundpartialdate = "2019-10-31";
         const {
             cities
         } = req.body
 
         try {
+
             // combine all possibilities of routes  2 on 2
             const citiesCombination = await utils.getPermutations(cities, 2);
+
 
             // get all prices for all routes
             const prices = await getPrices(config, country, currency, locale, outboundpartialdate, citiesCombination)
 
+
             // generare the coast matrix for the Travelling salesman solver
             const costMatrix = await utils.listToMatrix(prices, cities.length)
+
 
             //solves the Travelling salesman problem
             solver
@@ -61,6 +65,7 @@ module.exports = {
                 .then(function (result) {
                     return res.json(result);
                 })
+
 
         } catch (error) {
             return res.json({
