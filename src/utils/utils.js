@@ -40,4 +40,43 @@ function listToMatrix(list, elementsPerSubArray) {
     return matrix;
 }
 
-module.exports = { getPermutations, listToMatrix }
+teste = {
+    "rotas": {
+        "rota1": [
+            {
+                "origem": "BSB-sky",
+                "destino": "GRU-sky",
+                "dia": "2019-10-31"
+            },
+            {
+                "origem": "GIG-sky",
+                "destino": "POA-sky",
+                "dia": "2019-11-01"
+            },
+            {
+                "origem": "POA-sky",
+                "destino": "BSB-sky",
+                "dia": "2019-11-03"
+            }
+        ],
+        "rota2": [
+            {
+                "origem": "BSB-sky",
+                "destino": "POA-sky",
+                "dia": "2019-10-31"
+            },
+            {
+                "origem": "POA-sky",
+                "destino": "GIG-sky",
+                "dia": "2019-11-01"
+            },
+            {
+                "origem": "GIG-sky",
+                "destino": "BSB-sky",
+                "dia": "2019-11-03"
+            }
+        ]
+    }
+}
+
+module.exports = { getPermutations, listToMatrix, teste }

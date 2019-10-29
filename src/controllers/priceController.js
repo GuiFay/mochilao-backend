@@ -1,31 +1,37 @@
 const axios = require('axios');
-const solver = require('node-tspsolver')
 const utils = require("../utils/utils.js")
 
-async function getPrices(config, country, currency, locale, outboundpartialdate, cities) {
-    let prices = [];
+async function getPrices(config, country, currency, locale, rotas) {
+    let prices = {};
 
-    for (var i = 0; i < cities.length; i++) {
+    for (const x in rotas) {
+        route = rotas[x]
+        routeName = x
+        console.log(routeName)
+        prices[x] = []
+        for (const y in route) {
+            const { origem, destino, dia } = route[y]
 
-        try {
-            console.log(`Tentando ${cities[i][0]} -> ${cities[i][1]}`)
-            const response = await axios.get(` https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/${country}/${currency}/${locale}/${cities[i][0]}/${cities[i][1]}/${outboundpartialdate}`, config)
+            try {
+                console.log(`Buscando preço de ${origem} para ${destino} para o dia ${dia}`)
+                const response = await axios.get(` https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/${country}/${currency}/${locale}/${origem}/${destino}/${dia}`, config)
 
-            if (response.data.Quotes[0] == undefined) {
-                console.log(`${cities[i][0]} -> ${cities[i][1]} : 0`)
-                prices.push(0);
-            } else {
-                console.log(`${cities[i][0]} -> ${cities[i][1]} : ${response.data.Quotes[0].MinPrice}`)
-                prices.push(response.data.Quotes[0].MinPrice)
+                if (response.data.Quotes[0] == undefined) {
+                    console.log(`${origem} -> ${destino} : 0`)
+                    prices[x].push(0)
+                } else {
+                    console.log(`${origem} -> ${destino} : ${response.data.Quotes[0].MinPrice}`)
+                    prices[x].push(response.data.Quotes[0].MinPrice)
+                }
 
+            } catch (error) {
+                prices.push(Infinity);
             }
-
-        } catch (error) {
-            prices.push(Infinity);
         }
     }
     return prices
 }
+
 
 module.exports = {
     async index(req, res) {
@@ -40,31 +46,23 @@ module.exports = {
         const country = "BR";
         const currency = "BRL";
         const locale = "pt-BR";
-        const outboundpartialdate = "2019-10-31";
-        const {
-            cities
-        } = req.body
+        // const {
+        //     cities
+        // } = req.body
 
         try {
 
-            // combine all possibilities of routes  2 on 2
-            const citiesCombination = await utils.getPermutations(cities, 2);
-
+            const { rotas } = utils.teste
 
             // get all prices for all routes
-            const prices = await getPrices(config, country, currency, locale, outboundpartialdate, citiesCombination)
+            const prices = await getPrices(config, country, currency, locale, rotas)
+
+            const reducer = (accumulator, currentValue) => accumulator + currentValue;
+            result = Object.values(prices).map((route => route.reduce(reducer)))
 
 
-            // generare the coast matrix for the Travelling salesman solver
-            const costMatrix = await utils.listToMatrix(prices, cities.length)
+            return res.json(result);
 
-
-            //solves the Travelling salesman problem
-            solver
-                .solveTsp(costMatrix, true, {})
-                .then(function (result) {
-                    return res.json(result);
-                })
 
 
         } catch (error) {
