@@ -1,3 +1,78 @@
+const moment = require('moment');
+
+function generateroutes(origem, startDate, destinos) {
+
+    const cities = Object.keys(destinos)
+    const dates = Object.values(destinos)
+    const firstDate = moment(startDate).format('YYYY-MM-DD');
+    const perm = getPermutations(cities, 3)
+
+
+    //console.log(perm)
+
+    let routes = {
+        "rotas": {
+
+        }
+    }
+
+    perm.map((x, index) => {
+        const routeName = `route${index}`
+        routes["rotas"] = { ...routes["rotas"], [routeName]: [] }
+        let lastCity = ""
+        x.map((y, indice) => {
+            if (indice == 0) {
+                routes["rotas"][routeName].push({
+                    "origem": origem,
+                    "destino": y,
+                    "dia": firstDate
+                })
+            } else {
+                routes["rotas"][routeName].push({
+                    "origem": lastCity,
+                    "destino": y,
+                    "dia": "2019-10-31"
+                })
+            }
+            if (indice >= x.length - 1) {
+                routes["rotas"][routeName].push({
+                    "origem": y,
+                    "destino": origem,
+                    "dia": "2019-10-31"
+                })
+
+            }
+
+            lastCity = y
+
+
+        })
+
+    })
+    //console.log(JSON.stringify(routes, null, 4))
+
+    // const route = {
+    //     [routeName]: []
+
+    // }
+
+    // route[routeName].push({
+    //     "origem": origem,
+    //     "destino": perm[index],
+    //     "dia": "2019-10-31"
+    // })
+
+
+
+    //console.log(route)
+
+
+
+
+    return destinos
+
+}
+
 function getPermutations(list, maxLen) {
     // Copy initial values as arrays
     var perm = list.map(function (val) {
@@ -14,7 +89,9 @@ function getPermutations(list, maxLen) {
             var currPerm = perm.shift();
             // Create new permutation
             for (var k = 0; k < list.length; k++) {
-                perm.push(currPerm.concat(list[k]));
+                if (!currPerm.includes(list[k])) {
+                    perm.push(currPerm.concat(list[k]));
+                }
             }
         }
         // Recurse
@@ -24,21 +101,6 @@ function getPermutations(list, maxLen) {
     return generate(perm, maxLen, 1);
 };
 
-function listToMatrix(list, elementsPerSubArray) {
-    var matrix = [],
-        i, k;
-
-    for (i = 0, k = -1; i < list.length; i++) {
-        if (i % elementsPerSubArray === 0) {
-            k++;
-            matrix[k] = [];
-        }
-
-        matrix[k].push(list[i]);
-    }
-
-    return matrix;
-}
 
 teste = {
     "rotas": {
@@ -79,4 +141,4 @@ teste = {
     }
 }
 
-module.exports = { getPermutations, listToMatrix, teste }
+module.exports = { generateroutes, teste }

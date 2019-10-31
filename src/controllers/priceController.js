@@ -46,19 +46,26 @@ module.exports = {
         const country = "BR";
         const currency = "BRL";
         const locale = "pt-BR";
-        // const {
-        //     cities
-        // } = req.body
+        const {
+            destinos, startDate, origem
+        } = req.body
+
+
 
         try {
 
-            const { rotas } = utils.teste
+            //const { rotas } = utils.teste
+
+            const routes = await utils.generateroutes(origem, startDate, destinos)
+            // console.log(routes)
+
+
 
             // get all prices for all routes
-            const prices = await getPrices(config, country, currency, locale, rotas)
+            // const prices = await getPrices(config, country, currency, locale, rotas)
 
-            const reducer = (accumulator, currentValue) => accumulator + currentValue;
-            result = Object.values(prices).map((route => route.reduce(reducer)))
+            // const reducer = (accumulator, currentValue) => accumulator + currentValue;
+            // result = Object.values(prices).map((route => route.reduce(reducer)))
 
 
             return res.json(result);
