@@ -2,30 +2,37 @@ const axios = require('axios');
 const utils = require("../utils/utils.js")
 
 async function getPrices(config, country, currency, locale, rotas) {
+
+    const sleep = (milliseconds) => {
+        return new Promise(resolve => setTimeout(resolve, milliseconds))
+    }
     let prices = {};
 
     for (const x in rotas) {
         route = rotas[x]
         routeName = x
-        console.log(routeName)
         prices[x] = []
+        console.log(routeName)
         for (const y in route) {
             const { origem, destino, dia } = route[y]
 
             try {
                 console.log(`Buscando preço de ${origem} para ${destino} para o dia ${dia}`)
+                await sleep(2000);
                 const response = await axios.get(` https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/${country}/${currency}/${locale}/${origem}/${destino}/${dia}`, config)
+                const price = parseInt(response.data.Quotes[0].MinPrice)
 
-                if (response.data.Quotes[0] == undefined) {
+                if (price == undefined || isNaN(price)) {
                     console.log(`${origem} -> ${destino} : 0`)
                     prices[x].push(0)
                 } else {
-                    console.log(`${origem} -> ${destino} : ${response.data.Quotes[0].MinPrice}`)
-                    prices[x].push(response.data.Quotes[0].MinPrice)
+                    console.log(`${origem} -> ${destino} : ${price}`)
+                    prices[x].push(price)
                 }
 
+
             } catch (error) {
-                prices.push(Infinity);
+                return error;
             }
         }
     }
@@ -46,31 +53,30 @@ module.exports = {
         const country = "BR";
         const currency = "BRL";
         const locale = "pt-BR";
-        const {
-            destinos, startDate, origem
-        } = req.body
-
-
+        const { destinos, startDate, origem } = req.body
 
         try {
+            //generate all routes
+            const routes = await utils.generateRoutes(origem, startDate, destinos)
 
-            //const { rotas } = utils.teste
+            //get all prices for all routes
+            const prices = await getPrices(config, country, currency, locale, routes.rotas)
 
-            const routes = await utils.generateroutes(origem, startDate, destinos)
-            // console.log(routes)
-
-
-
-            // get all prices for all routes
-            // const prices = await getPrices(config, country, currency, locale, rotas)
-
-            // const reducer = (accumulator, currentValue) => accumulator + currentValue;
-            // result = Object.values(prices).map((route => route.reduce(reducer)))
+            // //reduce all values to sum of values
+            const reducer = (accumulator, currentValue) => accumulator + currentValue;
+            result = Object.values(prices).map((route => route.reduce(reducer)))
 
 
-            return res.json(result);
+            const minValueIndex = values.indexOf(Math.min(...values))
+            const minValue = Math.min(...values)
 
+            for (var prop in routes.rotas) {
+                if (prop == minValueIndex) {
+                    let bestRoute = { ...routes.rotas[prop], "Price": minValue };
+                    return res.json(bestRoute);
 
+                }
+            }
 
         } catch (error) {
             return res.json({

@@ -1,14 +1,10 @@
 const moment = require('moment');
 
-function generateroutes(origem, startDate, destinos) {
+function generateRoutes(origem, startDate, destinos) {
 
     const cities = Object.keys(destinos)
-    const dates = Object.values(destinos)
     const firstDate = moment(startDate).format('YYYY-MM-DD');
     const perm = getPermutations(cities, 3)
-
-
-    //console.log(perm)
 
     let routes = {
         "rotas": {
@@ -17,31 +13,39 @@ function generateroutes(origem, startDate, destinos) {
     }
 
     perm.map((x, index) => {
-        const routeName = `route${index}`
+        const routeName = `${index}`
         routes["rotas"] = { ...routes["rotas"], [routeName]: [] }
         let lastCity = ""
+        let date
         x.map((y, indice) => {
+            let dateIncrease = destinos[y]
+
             if (indice == 0) {
+                date = firstDate
                 routes["rotas"][routeName].push({
                     "origem": origem,
                     "destino": y,
-                    "dia": firstDate
+                    "dia": date
                 })
             } else {
                 routes["rotas"][routeName].push({
                     "origem": lastCity,
                     "destino": y,
-                    "dia": "2019-10-31"
-                })
-            }
-            if (indice >= x.length - 1) {
-                routes["rotas"][routeName].push({
-                    "origem": y,
-                    "destino": origem,
-                    "dia": "2019-10-31"
+                    "dia": date
                 })
 
             }
+            if (indice >= x.length - 1) {
+                date = moment(date).add(dateIncrease, 'days');
+                date = moment(date).format('YYYY-MM-DD');
+                routes["rotas"][routeName].push({
+                    "origem": y,
+                    "destino": origem,
+                    "dia": date
+                })
+            }
+            date = moment(date).add(dateIncrease, 'days');
+            date = moment(date).format('YYYY-MM-DD');
 
             lastCity = y
 
@@ -51,25 +55,7 @@ function generateroutes(origem, startDate, destinos) {
     })
     //console.log(JSON.stringify(routes, null, 4))
 
-    // const route = {
-    //     [routeName]: []
-
-    // }
-
-    // route[routeName].push({
-    //     "origem": origem,
-    //     "destino": perm[index],
-    //     "dia": "2019-10-31"
-    // })
-
-
-
-    //console.log(route)
-
-
-
-
-    return destinos
+    return routes
 
 }
 
@@ -101,44 +87,4 @@ function getPermutations(list, maxLen) {
     return generate(perm, maxLen, 1);
 };
 
-
-teste = {
-    "rotas": {
-        "rota1": [
-            {
-                "origem": "BSB-sky",
-                "destino": "GRU-sky",
-                "dia": "2019-10-31"
-            },
-            {
-                "origem": "GIG-sky",
-                "destino": "POA-sky",
-                "dia": "2019-11-01"
-            },
-            {
-                "origem": "POA-sky",
-                "destino": "BSB-sky",
-                "dia": "2019-11-03"
-            }
-        ],
-        "rota2": [
-            {
-                "origem": "BSB-sky",
-                "destino": "POA-sky",
-                "dia": "2019-10-31"
-            },
-            {
-                "origem": "POA-sky",
-                "destino": "GIG-sky",
-                "dia": "2019-11-01"
-            },
-            {
-                "origem": "GIG-sky",
-                "destino": "BSB-sky",
-                "dia": "2019-11-03"
-            }
-        ]
-    }
-}
-
-module.exports = { generateroutes, teste }
+module.exports = { generateRoutes }
