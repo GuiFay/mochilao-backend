@@ -30,18 +30,14 @@ async function getPrices(config, country, currency, locale, rotas) {
                     console.log(`${origem} -> ${destino} : ${price}`)
                     prices[x].push(price)
                 }
-
-
             } catch (error) {
                 console.log(`ERRO! TENTANDO NOVAMENTE`)
                 getPrices()
             }
-
         }
     }
     return prices
 }
-
 
 module.exports = {
     async index(req, res) {
@@ -63,11 +59,9 @@ module.exports = {
             console.log("GERANDO ROTAS...")
             const routes = await utils.generateRoutes(origem, startDate, destinos)
 
-
             //get all prices for all routes
             console.log("BUSCANDO PREÇOS NA API...")
             const prices = await getPrices(config, country, currency, locale, routes.rotas)
-
 
             //reduce all values to sum of values
             console.log("CALCULANDO MELHOR ROTA...")
@@ -80,7 +74,6 @@ module.exports = {
                 if (prop == minValueIndex) {
                     let bestRoute = { ...routes.rotas[prop], "Price": minValue };
                     return res.json(bestRoute);
-
                 }
             }
 
