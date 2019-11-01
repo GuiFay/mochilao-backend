@@ -12,7 +12,8 @@ async function getPrices(config, country, currency, locale, rotas) {
         route = rotas[x]
         routeName = x
         prices[x] = []
-        console.log(routeName)
+        console.log(`Rota ${routeName}`)
+
         for (const y in route) {
             const { origem, destino, dia } = route[y]
 
@@ -32,8 +33,10 @@ async function getPrices(config, country, currency, locale, rotas) {
 
 
             } catch (error) {
-                return error;
+                console.log(`ERRO! TENTANDO NOVAMENTE`)
+                getPrices()
             }
+
         }
     }
     return prices
@@ -57,18 +60,21 @@ module.exports = {
 
         try {
             //generate all routes
+            console.log("GERANDO ROTAS...")
             const routes = await utils.generateRoutes(origem, startDate, destinos)
 
+
             //get all prices for all routes
+            console.log("BUSCANDO PREÇOS NA API...")
             const prices = await getPrices(config, country, currency, locale, routes.rotas)
 
-            // //reduce all values to sum of values
+
+            //reduce all values to sum of values
+            console.log("CALCULANDO MELHOR ROTA...")
             const reducer = (accumulator, currentValue) => accumulator + currentValue;
             result = Object.values(prices).map((route => route.reduce(reducer)))
-
-
-            const minValueIndex = values.indexOf(Math.min(...values))
-            const minValue = Math.min(...values)
+            const minValueIndex = result.indexOf(Math.min(...result))
+            const minValue = Math.min(...result)
 
             for (var prop in routes.rotas) {
                 if (prop == minValueIndex) {
